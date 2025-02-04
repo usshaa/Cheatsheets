@@ -1,0 +1,234 @@
+PyTorch Cheatsheet 🌟
+PyTorch is an open-source deep learning framework developed by Facebook’s AI Research lab. It is known for its flexibility, dynamic computation graphs, and extensive support for GPU acceleration. PyTorch is widely used for machine learning and deep learning research and deployment.
+Here’s a comprehensive PyTorch cheatsheet with key functions and examples to help you quickly implement machine learning models using PyTorch.
+________________________________________
+🔹 1. Installation
+Installing PyTorch
+pip install torch torchvision
+Verifying Installation
+import torch
+print(torch.__version__)
+________________________________________
+🔹 2. Tensors in PyTorch
+Creating Tensors
+import torch
+
+# Scalar (0-D tensor)
+scalar = torch.tensor(5)
+
+# 1D Tensor (Vector)
+vector = torch.tensor([1, 2, 3])
+
+# 2D Tensor (Matrix)
+matrix = torch.tensor([[1, 2], [3, 4]])
+
+# 3D Tensor
+tensor_3d = torch.tensor([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+
+# Create random tensor
+random_tensor = torch.randn(2, 3)  # Random tensor with normal distribution
+
+# Check tensor type and shape
+print(scalar.shape)
+print(vector.shape)
+print(matrix.shape)
+Operations on Tensors
+# Addition
+sum_result = torch.add(matrix, matrix)
+
+# Matrix multiplication
+product = torch.matmul(matrix, matrix)
+
+# Element-wise multiplication
+elementwise_product = matrix * matrix
+Reshaping Tensors
+reshaped_tensor = tensor_3d.view(2, 4)
+Slicing and Indexing
+# Slicing a tensor
+sliced_tensor = tensor_3d[0, :, :]
+
+# Indexing a specific element
+element = tensor_3d[1, 0, 1]
+________________________________________
+🔹 3. Working with CUDA (GPU)
+Check for GPU Availability
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(device)
+Move Tensor to GPU
+# Move tensor to GPU if available
+tensor_on_gpu = tensor.to(device)
+Move Model to GPU
+model.to(device)
+________________________________________
+🔹 4. Building Neural Networks
+Define a Model Using torch.nn.Module
+import torch.nn as nn
+import torch.optim as optim
+
+class SimpleNN(nn.Module):
+    def __init__(self):
+        super(SimpleNN, self).__init__()
+        self.fc1 = nn.Linear(28 * 28, 128)  # Fully connected layer (input size: 28x28 pixels)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, 10)  # 10 output classes (for classification)
+
+    def forward(self, x):
+        x = x.view(-1, 28 * 28)  # Flatten the input image (28x28 pixels)
+        x = torch.relu(self.fc1(x))  # Apply ReLU activation
+        x = torch.relu(self.fc2(x))
+        x = self.fc3(x)  # Output layer
+        return x
+Instantiating the Model
+model = SimpleNN()
+________________________________________
+🔹 5. Loss Functions and Optimizers
+Loss Functions
+# Cross-Entropy Loss for multi-class classification
+loss_fn = nn.CrossEntropyLoss()
+
+# Mean Squared Error Loss for regression
+mse_loss = nn.MSELoss()
+Optimizers
+# Using Adam optimizer
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+# Using SGD optimizer
+optimizer_sgd = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+________________________________________
+🔹 6. Training and Evaluation
+Training the Model
+# Set the model to training mode
+model.train()
+
+# Training loop
+for epoch in range(num_epochs):
+    for data, target in train_loader:
+        data, target = data.to(device), target.to(device)  # Move data to GPU if available
+
+        optimizer.zero_grad()  # Clear previous gradients
+        output = model(data)  # Forward pass
+        loss = loss_fn(output, target)  # Compute loss
+        loss.backward()  # Backward pass
+        optimizer.step()  # Update model parameters
+
+    print(f"Epoch {epoch+1}, Loss: {loss.item()}")
+Evaluating the Model
+# Set the model to evaluation mode
+model.eval()
+
+correct = 0
+total = 0
+
+# Turn off gradients for evaluation to save memory
+with torch.no_grad():
+    for data, target in test_loader:
+        data, target = data.to(device), target.to(device)
+        output = model(data)
+        _, predicted = torch.max(output.data, 1)
+        total += target.size(0)
+        correct += (predicted == target).sum().item()
+
+accuracy = 100 * correct / total
+print(f"Accuracy: {accuracy}%")
+________________________________________
+🔹 7. Datasets and DataLoaders
+Loading Datasets (e.g., MNIST)
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+
+# Transformation for data normalization
+transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
+
+# Load MNIST dataset
+train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+
+# DataLoader for batching and shuffling
+train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
+________________________________________
+🔹 8. Saving and Loading Models
+Saving the Model
+# Save the entire model
+torch.save(model.state_dict(), 'model.pth')
+Loading the Model
+# Load the model's state_dict and apply to the model
+model = SimpleNN()
+model.load_state_dict(torch.load('model.pth'))
+model.to(device)
+________________________________________
+🔹 9. Custom Datasets
+Creating a Custom Dataset
+from torch.utils.data import Dataset
+
+class CustomDataset(Dataset):
+    def __init__(self, data, labels):
+        self.data = data
+        self.labels = labels
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        sample = self.data[idx]
+        label = self.labels[idx]
+        return sample, label
+
+# Example usage
+custom_dataset = CustomDataset(data, labels)
+custom_loader = DataLoader(custom_dataset, batch_size=32, shuffle=True)
+________________________________________
+🔹 10. Transfer Learning
+Using Pre-trained Models (e.g., ResNet)
+from torchvision import models
+
+# Load a pre-trained ResNet model
+model = models.resnet18(pretrained=True)
+
+# Freeze layers
+for param in model.parameters():
+    param.requires_grad = False
+
+# Modify the final layer for custom task (e.g., 10 classes)
+model.fc = nn.Linear(model.fc.in_features, 10)
+
+# Move model to device (GPU/CPU)
+model.to(device)
+________________________________________
+🔹 11. Advanced Features
+Autograd (Automatic Differentiation)
+# Create a tensor with requires_grad=True to track the gradient
+x = torch.randn(3, 3, requires_grad=True)
+
+# Perform some operations
+y = x + 2
+z = y * y * 3
+
+# Compute gradients
+z.sum().backward()  # Backpropagate the sum of z
+
+print(x.grad)  # Display gradients
+Gradient Clipping
+# Clip gradients to a max value to avoid exploding gradients
+torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+________________________________________
+🔹 12. Debugging with PyTorch
+Check for NaNs or Infs
+# Check for NaNs or Infs in the tensor
+if torch.isnan(tensor).any() or torch.isinf(tensor).any():
+    print("Tensor contains NaNs or Infs!")
+________________________________________
+🔹 13. PyTorch Summary
+Feature	Description
+torch.tensor()	Create a tensor from data
+torch.nn.Module	Define a custom model by inheriting from Module
+torch.optim.Adam	Optimizer (Adam) for model parameter updates
+torch.nn.CrossEntropyLoss	Loss function for classification tasks
+model.train()	Set model to training mode
+model.eval()	Set model to evaluation mode
+DataLoader	For batching and shuffling datasets
+torch.save()	Save model state dictionary to file
+torch.load()	Load model state dictionary from file
+________________________________________
+🚀 PyTorch is a powerful deep learning framework that supports dynamic computation graphs, easy model building, and a rich ecosystem for research and production!
+
